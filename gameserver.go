@@ -12,7 +12,7 @@ import (
 // Estrutura para representar um aluno
 type GameState struct {
     mapa [][]Elemento 
-	jogadores map[string]Posicao
+	jogadores map[string]Posicao	
 	ultimoElementoSobPersonagem Elemento
 	statusMsg string
 	efeitoNeblina bool
@@ -93,8 +93,13 @@ func (s *Servidor) inicializar() {
 	s.state.ultimoElementoSobPersonagem = vazio
 	s.state.statusMsg = "jogo inicializado"
 	s.state.efeitoNeblina = false
-	//s.state.revelado
 	s.state.raioVisao = 3
+}
+
+// metodo remoto que retorna o estado do jogo
+func (s *Servidor) getGameState(game *GameState) error{
+	*game = s.state 
+	return nil
 }
 
 func main() {
@@ -144,7 +149,7 @@ func (s *Servidor) carregarMapa(nomeArquivo string) error {
                 elementoAtual = vegetacao
             case personagem.simbolo:
                 // Atualiza a posição inicial do personagem
-                s.state.posX, s.state.posY = x, y
+                // s.state.posX, s.state.posY = x, y
                 elementoAtual = vazio
             }
             linhaElementos = append(linhaElementos, elementoAtual)
