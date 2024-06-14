@@ -97,7 +97,7 @@ func (s *Servidor) inicializar() {
 }
 
 // metodo remoto que retorna o estado do jogo
-func (s *Servidor) getGameState(game *GameState) error{
+func (s *Servidor) getGameState(player string, game *GameState) error{
 	*game = s.state 
 	return nil
 }
@@ -259,3 +259,37 @@ func (s *Servidor) interagir(username string) error {
     return nil
 }
 
+//metodos rpc faltantes para analisar depois
+
+// // Métodos RPC adicionais para mover e interagir
+// func (s *Servidor) Mover(args *MoverArgs, reply *MoverReply) error {
+// 	err := s.mover(args.Username, args.Comando)
+// 	reply.Err = err
+// 	if err == nil {
+// 		s.revelarArea(args.Username)
+// 	}
+// 	return err
+// }
+
+// func (s *Servidor) Interagir(args *InteragirArgs, reply *InteragirReply) error {
+// 	err := s.interagir(args.Username)
+// 	reply.Err = err
+// 	return err
+// }
+
+// type MoverArgs struct {
+// 	Username string
+// 	Comando  rune
+// }
+
+// type MoverReply struct {
+// 	Err error
+// }
+
+// type InteragirArgs struct {
+// 	Username string
+// }
+
+// type InteragirReply struct {
+// 	Err error
+// }
