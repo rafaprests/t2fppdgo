@@ -87,8 +87,6 @@ var neblina = Elemento{
     tangivel: false,
 }
 
-
-// Método para inicializar a lista de alunos no servidor
 func (s *Servidor) inicializar() {
     s.carregarMapa("mapa.txt")
 	s.state.jogadores = make(map[string]Posicao)
@@ -98,17 +96,6 @@ func (s *Servidor) inicializar() {
 	//s.state.revelado
 	s.state.raioVisao = 3
 }
-
-// Método remoto que retorna a nota de um aluno dado o seu nome
-// func (s *Servidor) ObtemNota(nome string, nota *float64) error {
-//     for _, aluno := range s.alunos {
-//         if aluno.Nome == nome {
-//             *nota = aluno.Nota
-//             return nil
-//         }
-//     }
-//     return fmt.Errorf("Aluno %s não encontrado", nome)
-// }
 
 func main() {
     porta := 8973
@@ -132,7 +119,6 @@ func main() {
         go rpc.ServeConn(conn)
     }
 }
-
 
 func (s *Servidor) carregarMapa(nomeArquivo string) error {
     arquivo, err := os.Open(nomeArquivo)
