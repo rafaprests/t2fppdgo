@@ -13,12 +13,20 @@ import (
 // Estrutura para representar um aluno
 type GameState struct {
 	mapa                        [][]Elemento
-	jogadores                   map[string]Posicao
+	jogador1                	Player
+	jogador2					Player
 	ultimoElementoSobPersonagem Elemento
 	statusMsg                   string
 	efeitoNeblina               bool
 	revelado                    [][]bool
 	raioVisao                   int
+}
+
+// estrutura para o jogador
+type Player struct {
+	posicao Posicao
+	id  int
+	nome string
 }
 
 // Estrutura para o servidor
@@ -89,11 +97,31 @@ var neblina = Elemento{
 
 func (s *Servidor) inicializar() {
 	s.carregarMapa("mapa.txt")
-	s.state.jogadores = make(map[string]Posicao)
+	s.state.jogador1 = Player{Posicao{0, 0}, 1, ""}
+	s.state.jogador2 = Player{Posicao{1, 0}, 2, ""}
 	s.state.ultimoElementoSobPersonagem = vazio
 	s.state.statusMsg = "jogo inicializado"
 	s.state.efeitoNeblina = false
 	s.state.raioVisao = 3
+}
+
+// metodo remoto que registra cliente
+func (s *Servidor) RegisterClient(nome string, reply *int) error{
+	if s.state.jogador1.nome == "" {
+		s.state.jogador1.nome = nome
+		*reply = 1
+	} else if s.state.jogador2.nome == "" {
+		s.state.jogador2.nome = nome
+		*reply = 2
+	} else {
+		return fmt.Errorf("Limite de jogadores atingido.")
+	}
+	return nil
+}
+
+// metodo remoto que recebe comando do cliente
+func (s *Servidor) SendCommand() error{
+
 }
 
 // metodo remoto que retorna o estado do jogo
@@ -193,7 +221,13 @@ func (s *Servidor) desenhaBarraDeStatus() {
 }
 
 func (s *Servidor) revelarArea(username string) {
-	posicao := s.state.jogadores[username]
+	var posicao Posicao
+	if s.state.jogador1.nome == username {
+		posicao = s.state.jogador1.pos
+	} else if s.state.jogador2.nome == username {
+		posicao = s.state.jogador2.pos
+	}
+
 	minX := max(0, posicao.x-s.state.raioVisao)
 	maxX := min(len(s.state.mapa[0])-1, posicao.x+s.state.raioVisao)
 	minY := max(0, posicao.y-s.state.raioVisao/2)
@@ -249,46 +283,15 @@ func (s *Servidor) mover(username string, comando rune) error {
 }
 
 func (s *Servidor) interagir(username string) error {
-	posicao, ok := s.state.jogadores[username]
-	if !ok {
+	var posicao Posicao
+	if s.state.jogador1.nome == username {
+		posicao = s.state.jogador1.pos
+	} else if s.state.jogador2.nome == username {
+		posicao = s.state.jogador2.pos
+	} else {
 		return fmt.Errorf("Jogador não encontrado: %s", username)
 	}
 
 	s.state.statusMsg = fmt.Sprintf("Interagindo em (%d, %d) pelo jogador %s", posicao.x, posicao.y, username)
 	return nil
 }
-
-//metodos rpc faltantes para analisar depois
-
-// // Métodos RPC adicionais para mover e interagir
-// func (s *Servidor) Mover(args *MoverArgs, reply *MoverReply) error {
-// 	err := s.mover(args.Username, args.Comando)
-// 	reply.Err = err
-// 	if err == nil {
-// 		s.revelarArea(args.Username)
-// 	}
-// 	return err
-// }
-
-// func (s *Servidor) Interagir(args *InteragirArgs, reply *InteragirReply) error {
-// 	err := s.interagir(args.Username)
-// 	reply.Err = err
-// 	return err
-// }
-
-// type MoverArgs struct {
-// 	Username string
-// 	Comando  rune
-// }
-
-// type MoverReply struct {
-// 	Err error
-// }
-
-// type InteragirArgs struct {
-// 	Username string
-// }
-
-// type InteragirReply struct {
-// 	Err error
-// }
