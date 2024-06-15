@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/nsf/termbox-go"
-	"golang.org/x/text/cases"
+	//"golang.org/x/text/cases"
 )
 
 // Estrutura para representar um aluno
@@ -32,8 +32,8 @@ type Player struct {
 
 // estrutura para o comando
 type Command struct {
-	playerID int
-	action string
+	PlayerID int
+	Action string
 }
 
 // Estrutura para o servidor
@@ -129,15 +129,15 @@ func (s *Servidor) RegisterClient(nome string, reply *int) error{
 // metodo remoto que recebe comando do cliente
 func (s *Servidor) SendCommand(cmd Command, reply *string) error{
 	var player *Player
-	if cmd.playerID == 1 {
+	if cmd.PlayerID == 1 {
 		player = &s.state.jogador1
-	} else if cmd.playerID == 2 {
+	} else if cmd.PlayerID == 2 {
 		player = &s.state.jogador2
 	} else {
 		return fmt.Errorf("ID de jogador invalido")
 	}
 
-	switch cmd.action {
+	switch cmd.Action {
 	case "move_up":
 		return s.mover(player.nome, 'w')
 	case "move_down":
