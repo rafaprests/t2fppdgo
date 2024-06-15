@@ -13,21 +13,21 @@ import (
 
 // Estrutura para representar um aluno
 type GameState struct {
-	mapa                        [][]Elemento
-	jogador1                	Player
-	jogador2					Player
-	ultimoElementoSobPersonagem Elemento
-	statusMsg                   string
-	efeitoNeblina               bool
-	revelado                    [][]bool
-	raioVisao                   int
+	Mapa                        [][]Elemento
+	Jogador1                	Player
+	Jogador2					Player
+	UltimoElementoSobPersonagem Elemento
+	StatusMsg                   string
+	EfeitoNeblina               bool
+	Revelado                    [][]bool
+	RaioVisao                   int
 }
 
 // estrutura para o jogador
 type Player struct {
-	posicao Posicao
-	id int
-	nome string
+	Posicao Posicao
+	Id int
+	Nome string
 }
 
 // estrutura para o comando
@@ -38,7 +38,7 @@ type Command struct {
 
 // Estrutura para o servidor
 type Servidor struct {
-	state GameState
+	State GameState
 }
 
 // Define os elementos do jogo
@@ -50,8 +50,8 @@ type Elemento struct {
 }
 
 type Posicao struct {
-	x int
-	y int
+	X int
+	Y int
 }
 
 // Personagem controlado pelo jogador
@@ -102,23 +102,23 @@ var neblina = Elemento{
 	tangivel: false,
 }
 
-func (s *Servidor) inicializar() {
-	s.carregarMapa("mapa.txt")
-	s.state.jogador1 = Player{Posicao{0, 0}, 1, ""}
-	s.state.jogador2 = Player{Posicao{1, 0}, 2, ""}
-	s.state.ultimoElementoSobPersonagem = vazio
-	s.state.statusMsg = "jogo inicializado"
-	s.state.efeitoNeblina = false
-	s.state.raioVisao = 3
+func (s *Servidor) Inicializar() {
+	s.CarregarMapa("mapa.txt")
+	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
+	s.State.Jogador2 = Player{Posicao{1, 0}, 2, ""}
+	s.State.UltimoElementoSobPersonagem = vazio
+	s.State.StatusMsg = "jogo inicializado"
+	s.State.EfeitoNeblina = false
+	s.State.RaioVisao = 3
 }
 
 // metodo remoto que registra cliente
 func (s *Servidor) RegisterClient(nome string, reply *int) error{
-	if s.state.jogador1.nome == "" {
-		s.state.jogador1.nome = nome
+	if s.State.Jogador1.Nome == "" {
+		s.State.Jogador1.Nome = nome
 		*reply = 1
-	} else if s.state.jogador2.nome == "" {
-		s.state.jogador2.nome = nome
+	} else if s.State.Jogador2.Nome == "" {
+		s.State.Jogador2.Nome = nome
 		*reply = 2
 	} else {
 		return fmt.Errorf("Limite de jogadores atingido.")
@@ -130,24 +130,24 @@ func (s *Servidor) RegisterClient(nome string, reply *int) error{
 func (s *Servidor) SendCommand(cmd Command, reply *string) error{
 	var player *Player
 	if cmd.PlayerID == 1 {
-		player = &s.state.jogador1
+		player = &s.State.Jogador1
 	} else if cmd.PlayerID == 2 {
-		player = &s.state.jogador2
+		player = &s.State.Jogador2
 	} else {
 		return fmt.Errorf("ID de jogador invalido")
 	}
 
 	switch cmd.Action {
 	case "move_up":
-		return s.mover(player.nome, 'w')
+		return s.Mover(player.Nome, 'w')
 	case "move_down":
-		return s.mover(player.nome, 's')
+		return s.Mover(player.Nome, 's')
 	case "move_left":
-		return s.mover(player.nome, 'a')
+		return s.Mover(player.Nome, 'a')
 	case "move_right":
-		return s.mover(player.nome, 'd')
+		return s.Mover(player.Nome, 'd')
 	case "interact":
-		return s.interagir(player.nome)
+		return s.Interagir(player.Nome)
 	default:
 		return fmt.Errorf("acao invalida")
 	}
@@ -155,14 +155,14 @@ func (s *Servidor) SendCommand(cmd Command, reply *string) error{
 
 // metodo remoto que retorna o estado do jogo
 func (s *Servidor) GetGameState(player string, game *GameState) error {
-	*game = s.state
+	*game = s.State
 	return nil
 }
 
 func main() {
 	porta := 8973
 	servidor := new(Servidor)
-	servidor.inicializar()
+	servidor.Inicializar()
 
 	rpc.Register(servidor)
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", porta))
@@ -182,7 +182,7 @@ func main() {
 	}
 }
 
-func (s *Servidor) carregarMapa(nomeArquivo string) error {
+func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 	arquivo, err := os.Open(nomeArquivo)
 	if err != nil {
 		return err
@@ -213,8 +213,8 @@ func (s *Servidor) carregarMapa(nomeArquivo string) error {
 			linhaElementos = append(linhaElementos, elementoAtual)
 			linhaRevelada = append(linhaRevelada, false)
 		}
-		s.state.mapa = append(s.state.mapa, linhaElementos)
-		s.state.revelado = append(s.state.revelado, linhaRevelada)
+		s.State.Mapa = append(s.State.Mapa, linhaElementos)
+		s.State.Revelado = append(s.State.Revelado, linhaRevelada)
 		y++
 	}
 	if err := scanner.Err(); err != nil {
@@ -223,11 +223,11 @@ func (s *Servidor) carregarMapa(nomeArquivo string) error {
 	return nil
 }
 
-func (s *Servidor) desenhaTudo() {
+func (s *Servidor) DesenhaTudo() {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	for y, linha := range s.state.mapa {
+	for y, linha := range s.State.Mapa {
 		for x, elem := range linha {
-			if s.state.efeitoNeblina == false || s.state.revelado[y][x] {
+			if s.State.EfeitoNeblina == false || s.State.Revelado[y][x] {
 				termbox.SetCell(x, y, elem.simbolo, elem.cor, elem.corFundo)
 			} else {
 				termbox.SetCell(x, y, neblina.simbolo, neblina.cor, neblina.corFundo)
@@ -235,36 +235,36 @@ func (s *Servidor) desenhaTudo() {
 		}
 	}
 
-	s.desenhaBarraDeStatus()
+	s.DesenhaBarraDeStatus()
 	termbox.Flush()
 }
 
-func (s *Servidor) desenhaBarraDeStatus() {
-	for i, c := range s.state.statusMsg {
-		termbox.SetCell(i, len(s.state.mapa)+1, c, termbox.ColorBlack, termbox.ColorDefault)
+func (s *Servidor) DesenhaBarraDeStatus() {
+	for i, c := range s.State.StatusMsg {
+		termbox.SetCell(i, len(s.State.Mapa)+1, c, termbox.ColorBlack, termbox.ColorDefault)
 	}
 	msg := "Use WASD para mover e E para interagir. ESC para sair."
 	for i, c := range msg {
-		termbox.SetCell(i, len(s.state.mapa)+3, c, termbox.ColorBlack, termbox.ColorDefault)
+		termbox.SetCell(i, len(s.State.Mapa)+3, c, termbox.ColorBlack, termbox.ColorDefault)
 	}
 }
 
-func (s *Servidor) revelarArea(username string) {
+func (s *Servidor) RevelarArea(username string) {
 	var posicao Posicao
-	if s.state.jogador1.nome == username {
-		posicao = s.state.jogador1.posicao
-	} else if s.state.jogador2.nome == username {
-		posicao = s.state.jogador2.posicao
+	if s.State.Jogador1.Nome == username {
+		posicao = s.State.Jogador1.Posicao
+	} else if s.State.Jogador2.Nome == username {
+		posicao = s.State.Jogador2.Posicao
 	}
 
-	minX := max(0, posicao.x-s.state.raioVisao)
-	maxX := min(len(s.state.mapa[0])-1, posicao.x+s.state.raioVisao)
-	minY := max(0, posicao.y-s.state.raioVisao/2)
-	maxY := min(len(s.state.mapa)-1, posicao.y+s.state.raioVisao/2)
+	minX := max(0, posicao.X-s.State.RaioVisao)
+	maxX := min(len(s.State.Mapa[0])-1, posicao.X+s.State.RaioVisao)
+	minY := max(0, posicao.Y-s.State.RaioVisao/2)
+	maxY := min(len(s.State.Mapa)-1, posicao.Y+s.State.RaioVisao/2)
 
 	for y := minY; y <= maxY; y++ {
 		for x := minX; x <= maxX; x++ {
-			s.state.revelado[y][x] = true
+			s.State.Revelado[y][x] = true
 		}
 	}
 }
@@ -283,12 +283,12 @@ func min(a, b int) int {
 	return b
 }
 
-func (s *Servidor) mover(username string, comando rune) error {
+func (s *Servidor) Mover(username string, comando rune) error {
 	var player *Player
-	if s.state.jogador1.nome == username {
-		player = &s.state.jogador1
-	} else if s.state.jogador2.nome == username {
-		player = &s.state.jogador2
+	if s.State.Jogador1.Nome == username {
+		player = &s.State.Jogador1
+	} else if s.State.Jogador2.Nome == username {
+		player = &s.State.Jogador2
 	} else {
 		return fmt.Errorf("Jogador não encontrado: %s", username)
 	}
@@ -305,26 +305,26 @@ func (s *Servidor) mover(username string, comando rune) error {
 		dx = 1
 	}
 
-	novaPosX, novaPosY := player.posicao.x + dx, player.posicao.y + dy
-	if novaPosY >= 0 && novaPosY < len(s.state.mapa) && novaPosX >= 0 && novaPosX < len(s.state.mapa[novaPosY]) &&
-		s.state.mapa[novaPosY][novaPosX].tangivel == false {
-		player.posicao = Posicao{novaPosX, novaPosY}
+	novaPosX, novaPosY := player.Posicao.X + dx, player.Posicao.Y + dy
+	if novaPosY >= 0 && novaPosY < len(s.State.Mapa) && novaPosX >= 0 && novaPosX < len(s.State.Mapa[novaPosY]) &&
+		s.State.Mapa[novaPosY][novaPosX].tangivel == false {
+		player.Posicao = Posicao{novaPosX, novaPosY}
 		return nil
 	}
 
 	return fmt.Errorf("Movimento inválido para o jogador %s", username)
 }
 
-func (s *Servidor) interagir(username string) error {
+func (s *Servidor) Interagir(username string) error {
 	var posicao Posicao
-	if s.state.jogador1.nome == username {
-		posicao = s.state.jogador1.posicao
-	} else if s.state.jogador2.nome == username {
-		posicao = s.state.jogador2.posicao
+	if s.State.Jogador1.Nome == username {
+		posicao = s.State.Jogador1.Posicao
+	} else if s.State.Jogador2.Nome == username {
+		posicao = s.State.Jogador2.Posicao
 	} else {
 		return fmt.Errorf("Jogador não encontrado: %s", username)
 	}
 
-	s.state.statusMsg = fmt.Sprintf("Interagindo em (%d, %d) pelo jogador %s", posicao.x, posicao.y, username)
+	s.State.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d) pelo jogador %s", posicao.X, posicao.Y, username)
 	return nil
 }

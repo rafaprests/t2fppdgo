@@ -10,22 +10,23 @@ import (
 
 // Defina a estrutura GameState
 // Estrutura para representar um aluno
+// Estrutura para representar um aluno
 type GameState struct {
-	mapa                        [][]Elemento
-	jogador1                    Player
-	jogador2                    Player
-	ultimoElementoSobPersonagem Elemento
-	statusMsg                   string
-	efeitoNeblina               bool
-	revelado                    [][]bool
-	raioVisao                   int
+	Mapa                        [][]Elemento
+	Jogador1                	Player
+	Jogador2					Player
+	UltimoElementoSobPersonagem Elemento
+	StatusMsg                   string
+	EfeitoNeblina               bool
+	Revelado                    [][]bool
+	RaioVisao                   int
 }
 
 // estrutura para o jogador
 type Player struct {
-	posicao Posicao
-	id      int
-	nome    string
+	Posicao Posicao
+	Id int
+	Nome string
 }
 
 // Defina a estrutura Elemento
@@ -38,8 +39,8 @@ type Elemento struct {
 
 // Defina a estrutura Posicao
 type Posicao struct {
-	x int
-	y int
+	X int
+	Y int
 }
 
 func main() {
