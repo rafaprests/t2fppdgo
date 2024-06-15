@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/nsf/termbox-go"
+	"golang.org/x/text/cases"
 )
 
 // Estrutura para representar um aluno
@@ -25,8 +26,14 @@ type GameState struct {
 // estrutura para o jogador
 type Player struct {
 	posicao Posicao
-	id  int
+	id int
 	nome string
+}
+
+// estrutura para o comando
+type Command struct {
+	playerID int
+	action string
 }
 
 // Estrutura para o servidor
@@ -120,8 +127,30 @@ func (s *Servidor) RegisterClient(nome string, reply *int) error{
 }
 
 // metodo remoto que recebe comando do cliente
-func (s *Servidor) SendCommand() error{
+func (s *Servidor) SendCommand(cmd Command, reply *string) error{
+	var player *Player
+	if cmd.playerID == 1 {
+		player = &s.state.jogador1
+	} else if cmd.playerID == 2 {
+		player = &s.state.jogador2
+	} else {
+		return fmt.Errorf("ID de jogador invalido")
+	}
 
+	switch cmd.action {
+	case "move_up":
+		return s.mover(player.nome, 'w')
+	case "move_down":
+		return s.mover(player.nome, 's')
+	case "move_left":
+		return s.mover(player.nome, 'a')
+	case "move_right":
+		return s.mover(player.nome, 'd')
+	case "interact":
+		return s.interagir(player.nome)
+	default:
+		return fmt.Errorf("acao invalida")
+	}
 }
 
 // metodo remoto que retorna o estado do jogo
@@ -223,9 +252,9 @@ func (s *Servidor) desenhaBarraDeStatus() {
 func (s *Servidor) revelarArea(username string) {
 	var posicao Posicao
 	if s.state.jogador1.nome == username {
-		posicao = s.state.jogador1.pos
+		posicao = s.state.jogador1.posicao
 	} else if s.state.jogador2.nome == username {
-		posicao = s.state.jogador2.pos
+		posicao = s.state.jogador2.posicao
 	}
 
 	minX := max(0, posicao.x-s.state.raioVisao)
@@ -255,8 +284,12 @@ func min(a, b int) int {
 }
 
 func (s *Servidor) mover(username string, comando rune) error {
-	posicao, ok := s.state.jogadores[username]
-	if !ok {
+	var player *Player
+	if s.state.jogador1.nome == username {
+		player = &s.state.jogador1
+	} else if s.state.jogador2.nome == username {
+		player = &s.state.jogador2
+	} else {
 		return fmt.Errorf("Jogador não encontrado: %s", username)
 	}
 
@@ -272,10 +305,10 @@ func (s *Servidor) mover(username string, comando rune) error {
 		dx = 1
 	}
 
-	novaPosX, novaPosY := posicao.x+dx, posicao.y+dy
+	novaPosX, novaPosY := player.posicao.x + dx, player.posicao.y + dy
 	if novaPosY >= 0 && novaPosY < len(s.state.mapa) && novaPosX >= 0 && novaPosX < len(s.state.mapa[novaPosY]) &&
 		s.state.mapa[novaPosY][novaPosX].tangivel == false {
-		s.state.jogadores[username] = Posicao{novaPosX, novaPosY}
+		player.posicao = Posicao{novaPosX, novaPosY}
 		return nil
 	}
 
@@ -285,9 +318,9 @@ func (s *Servidor) mover(username string, comando rune) error {
 func (s *Servidor) interagir(username string) error {
 	var posicao Posicao
 	if s.state.jogador1.nome == username {
-		posicao = s.state.jogador1.pos
+		posicao = s.state.jogador1.posicao
 	} else if s.state.jogador2.nome == username {
-		posicao = s.state.jogador2.pos
+		posicao = s.state.jogador2.posicao
 	} else {
 		return fmt.Errorf("Jogador não encontrado: %s", username)
 	}

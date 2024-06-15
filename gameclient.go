@@ -9,14 +9,23 @@ import (
 )
 
 // Defina a estrutura GameState
+// Estrutura para representar um aluno
 type GameState struct {
 	mapa                        [][]Elemento
-	jogadores                   map[string]Posicao
+	jogador1                	Player
+	jogador2					Player
 	ultimoElementoSobPersonagem Elemento
 	statusMsg                   string
 	efeitoNeblina               bool
 	revelado                    [][]bool
 	raioVisao                   int
+}
+
+// estrutura para o jogador
+type Player struct {
+	posicao Posicao
+	id  int
+	nome string
 }
 
 // Defina a estrutura Elemento
