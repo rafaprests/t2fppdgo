@@ -12,8 +12,8 @@ import (
 // Estrutura para representar um aluno
 type GameState struct {
 	mapa                        [][]Elemento
-	jogador1                	Player
-	jogador2					Player
+	jogador1                    Player
+	jogador2                    Player
 	ultimoElementoSobPersonagem Elemento
 	statusMsg                   string
 	efeitoNeblina               bool
@@ -24,8 +24,8 @@ type GameState struct {
 // estrutura para o jogador
 type Player struct {
 	posicao Posicao
-	id  int
-	nome string
+	id      int
+	nome    string
 }
 
 // Defina a estrutura Elemento
@@ -58,6 +58,15 @@ func main() {
 		fmt.Println("Erro ao conectar ao servidor:", err)
 		return
 	}
+
+	// Chamar método remoto para registrar o cliente
+	var reply int
+	err = client.Call("Servidor.RegisterClient", jogador, &reply)
+	if err != nil {
+		fmt.Println("Erro ao registrar cliente:", err)
+		return
+	}
+	fmt.Printf("Jogador registrado com sucesso. ID: %d\n", reply)
 
 	var game GameState
 	err = client.Call("Servidor.GetGameState", jogador, &game)
