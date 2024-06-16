@@ -11,7 +11,7 @@ import (
 	//"golang.org/x/text/cases"
 )
 
-// Estrutura para representar um aluno
+// estrutura do gamestate
 type GameState struct {
 	Mapa                        [][]Elemento
 	Jogador1                    Player
@@ -41,7 +41,7 @@ type Servidor struct {
 	State GameState
 }
 
-// Define os elementos do jogo
+// estrutura para o elemento
 type Elemento struct {
 	Simbolo  rune
 	Cor      termbox.Attribute
@@ -56,7 +56,7 @@ type Posicao struct {
 
 var personagem = Elemento{
 	Simbolo:  '☺',
-	Cor:      termbox.ColorBlack,
+	Cor:      termbox.ColorWhite,
 	CorFundo: termbox.ColorDefault,
 	Tangivel: true,
 }
@@ -97,9 +97,9 @@ var neblina = Elemento{
 }
 
 func (s *Servidor) Inicializar() {
-	s.CarregarMapa("mapa.txt")
 	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
-	s.State.Jogador2 = Player{Posicao{1, 0}, 2, ""}
+	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
+	s.CarregarMapa("mapa.txt")
 	s.State.UltimoElementoSobPersonagem = vazio
 	s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = false
@@ -200,8 +200,15 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 				elementoAtual = vegetacao
 			case personagem.Simbolo:
 				// Atualiza a posição inicial do personagem
-				// s.state.posX, s.state.posY = x, y
-				fmt.Printf("Personagem encontrado na posição (%d, %d)\n", x, y)
+				if s.State.Jogador1.Posicao.X == 0 && s.State.Jogador1.Posicao.Y == 0 {
+					s.State.Jogador1.Posicao.X = x
+					s.State.Jogador1.Posicao.Y = y
+					fmt.Printf("Jogador1 encontrado na posição (%d, %d)\n", x, y)
+				} else {
+					s.State.Jogador2.Posicao.X = x
+					s.State.Jogador2.Posicao.Y = y
+					fmt.Printf("Jogador2 encontrado na posição (%d, %d)\n", x, y)
+				}
 				elementoAtual = vazio
 			}
 			linhaElementos = append(linhaElementos, elementoAtual)
@@ -217,31 +224,31 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 	return nil
 }
 
-func (s *Servidor) DesenhaTudo() {
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	for y, linha := range s.State.Mapa {
-		for x, elem := range linha {
-			if s.State.EfeitoNeblina == false || s.State.Revelado[y][x] {
-				termbox.SetCell(x, y, elem.Simbolo, elem.Cor, elem.CorFundo)
-			} else {
-				termbox.SetCell(x, y, neblina.Simbolo, neblina.Cor, neblina.CorFundo)
-			}
-		}
-	}
+// func (s *Servidor) DesenhaTudo() {
+// 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+// 	for y, linha := range s.State.Mapa {
+// 		for x, elem := range linha {
+// 			if s.State.EfeitoNeblina == false || s.State.Revelado[y][x] {
+// 				termbox.SetCell(x, y, elem.Simbolo, elem.Cor, elem.CorFundo)
+// 			} else {
+// 				termbox.SetCell(x, y, neblina.Simbolo, neblina.Cor, neblina.CorFundo)
+// 			}
+// 		}
+// 	}
 
-	s.DesenhaBarraDeStatus()
-	termbox.Flush()
-}
+// 	s.DesenhaBarraDeStatus()
+// 	termbox.Flush()
+// }
 
-func (s *Servidor) DesenhaBarraDeStatus() {
-	for i, c := range s.State.StatusMsg {
-		termbox.SetCell(i, len(s.State.Mapa)+1, c, termbox.ColorBlack, termbox.ColorDefault)
-	}
-	msg := "Use WASD para mover e E para interagir. ESC para sair."
-	for i, c := range msg {
-		termbox.SetCell(i, len(s.State.Mapa)+3, c, termbox.ColorBlack, termbox.ColorDefault)
-	}
-}
+// func (s *Servidor) DesenhaBarraDeStatus() {
+// 	for i, c := range s.State.StatusMsg {
+// 		termbox.SetCell(i, len(s.State.Mapa)+1, c, termbox.ColorBlack, termbox.ColorDefault)
+// 	}
+// 	msg := "Use WASD para mover e E para interagir. ESC para sair."
+// 	for i, c := range msg {
+// 		termbox.SetCell(i, len(s.State.Mapa)+3, c, termbox.ColorBlack, termbox.ColorDefault)
+// 	}
+// }
 
 func (s *Servidor) RevelarArea(username string) {
 	var posicao Posicao
@@ -306,7 +313,7 @@ func (s *Servidor) Mover(username string, comando rune) error {
 		return nil
 	}
 
-	return fmt.Errorf("Movimento inválido para o jogador %s", username)
+	return nil //fmt.Errorf("Movimento inválido para o jogador %s", username)
 }
 
 func (s *Servidor) Interagir(username string) error {

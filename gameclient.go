@@ -9,13 +9,11 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-// Defina a estrutura GameState
-// Estrutura para representar um aluno
-// Estrutura para representar um aluno
+// estrutura do gamestate
 type GameState struct {
 	Mapa                        [][]Elemento
-	Jogador1                	Player
-	Jogador2					Player
+	Jogador1                    Player
+	Jogador2                    Player
 	UltimoElementoSobPersonagem Elemento
 	StatusMsg                   string
 	EfeitoNeblina               bool
@@ -26,11 +24,17 @@ type GameState struct {
 // estrutura para o jogador
 type Player struct {
 	Posicao Posicao
-	Id int
-	Nome string
+	Id      int
+	Nome    string
 }
 
-// Defina a estrutura Elemento
+// estrutura para o comando
+type Command struct {
+	PlayerID int
+	Action   string
+}
+
+// estrutura para o elemento
 type Elemento struct {
 	Simbolo  rune
 	Cor      termbox.Attribute
@@ -38,12 +42,12 @@ type Elemento struct {
 	Tangivel bool
 }
 
-// Defina a estrutura Posicao
 type Posicao struct {
 	X int
 	Y int
 }
 
+// estrutura para comando
 func main() {
 
 	if len(os.Args) != 3 {
@@ -70,7 +74,6 @@ func main() {
 	}
 	fmt.Printf("Jogador registrado com sucesso. ID: %d\n", reply)
 
-
 	// Inicializar termbox
 	err = termbox.Init()
 	if err != nil {
@@ -78,21 +81,52 @@ func main() {
 	}
 	defer termbox.Close()
 
-
 	var game GameState
-	for {
-		err = client.Call("Servidor.GetGameState", jogador, &game)
-		if err != nil {
-			fmt.Println("Erro ao obter estado do jogo:", err)
-			break
-		}
+	// Goroutine para atualizar o estado do jogo periodicamente
+	go func() {
+		for {
+			err = client.Call("Servidor.GetGameState", jogador, &game)
+			if err != nil {
+				fmt.Println("Erro ao obter estado do jogo:", err)
+				break
+			}
 
-		// Desenhar o estado do jogo na tela
-		desenharEstadoDoJogo(&game)
-		time.Sleep(2 * time.Second)
+			// Desenhar o estado do jogo na tela
+			desenharEstadoDoJogo(&game)
+			time.Sleep(200 * time.Millisecond)
+		}
+	}()
+
+	for {
+		var action string
+		switch ev := termbox.PollEvent(); ev.Type {
+		case termbox.EventKey:
+			if ev.Key == termbox.KeyEsc {
+				return
+			}
+			if ev.Key == termbox.KeyArrowUp{
+				action = "move_up"
+			}
+			if ev.Key == termbox.KeyArrowDown{
+				action = "move_down"
+			}
+			if ev.Key == termbox.KeyArrowLeft{
+				action = "move_left"
+			}
+			if ev.Key == termbox.KeyArrowRight{
+				action = "move_right"
+			}
+		}
+		if action != "" {
+			cmd := Command{PlayerID: reply, Action: action}
+			var response string
+			err := client.Call("Servidor.SendCommand", cmd, &response)
+			if err != nil{
+				fmt.Println("erro ao enviar comando", err)
+			}
+		}
 	}
 }
-
 
 func desenharEstadoDoJogo(game *GameState) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
@@ -105,6 +139,10 @@ func desenharEstadoDoJogo(game *GameState) {
 			}
 		}
 	}
+	
+	// Desenhar os personagens
+	termbox.SetCell(game.Jogador1.Posicao.X, game.Jogador1.Posicao.Y, '☺', termbox.ColorWhite, termbox.ColorDefault)
+	termbox.SetCell(game.Jogador2.Posicao.X, game.Jogador2.Posicao.Y, '☺', termbox.ColorWhite, termbox.ColorDefault)
 
 	// Desenhar barra de status
 	for i, c := range game.StatusMsg {
