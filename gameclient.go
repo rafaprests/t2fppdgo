@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/rpc"
 	"os"
+	"time"
 
 	"github.com/nsf/termbox-go"
 )
@@ -31,10 +32,10 @@ type Player struct {
 
 // Defina a estrutura Elemento
 type Elemento struct {
-	simbolo  rune
-	cor      termbox.Attribute
-	corFundo termbox.Attribute
-	tangivel bool
+	Simbolo  rune
+	Cor      termbox.Attribute
+	CorFundo termbox.Attribute
+	Tangivel bool
 }
 
 // Defina a estrutura Posicao
@@ -69,11 +70,50 @@ func main() {
 	}
 	fmt.Printf("Jogador registrado com sucesso. ID: %d\n", reply)
 
-	var game GameState
-	err = client.Call("Servidor.GetGameState", jogador, &game)
+
+	// Inicializar termbox
+	err = termbox.Init()
 	if err != nil {
-		fmt.Println("Erro ao obter estado do jogo:", err)
-	} else {
-		fmt.Printf("Sucesso em obter o estado do jogo")
+		panic(err)
 	}
+	defer termbox.Close()
+
+
+	var game GameState
+	for {
+		err = client.Call("Servidor.GetGameState", jogador, &game)
+		if err != nil {
+			fmt.Println("Erro ao obter estado do jogo:", err)
+			break
+		}
+
+		// Desenhar o estado do jogo na tela
+		desenharEstadoDoJogo(&game)
+		time.Sleep(2 * time.Second)
+	}
+}
+
+
+func desenharEstadoDoJogo(game *GameState) {
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	for y, linha := range game.Mapa {
+		for x, elem := range linha {
+			if game.EfeitoNeblina == false || game.Revelado[y][x] {
+				termbox.SetCell(x, y, elem.Simbolo, elem.Cor, elem.CorFundo)
+			} else {
+				termbox.SetCell(x, y, '.', termbox.ColorDefault, termbox.ColorYellow)
+			}
+		}
+	}
+
+	// Desenhar barra de status
+	for i, c := range game.StatusMsg {
+		termbox.SetCell(i, len(game.Mapa)+1, c, termbox.ColorBlack, termbox.ColorDefault)
+	}
+	msg := "Use WASD para mover e E para interagir. ESC para sair."
+	for i, c := range msg {
+		termbox.SetCell(i, len(game.Mapa)+3, c, termbox.ColorBlack, termbox.ColorDefault)
+	}
+
+	termbox.Flush()
 }
