@@ -14,8 +14,8 @@ import (
 // Estrutura para representar um aluno
 type GameState struct {
 	Mapa                        [][]Elemento
-	Jogador1                	Player
-	Jogador2					Player
+	Jogador1                    Player
+	Jogador2                    Player
 	UltimoElementoSobPersonagem Elemento
 	StatusMsg                   string
 	EfeitoNeblina               bool
@@ -26,14 +26,14 @@ type GameState struct {
 // estrutura para o jogador
 type Player struct {
 	Posicao Posicao
-	Id int
-	Nome string
+	Id      int
+	Nome    string
 }
 
 // estrutura para o comando
 type Command struct {
 	PlayerID int
-	Action string
+	Action   string
 }
 
 // Estrutura para o servidor
@@ -43,10 +43,10 @@ type Servidor struct {
 
 // Define os elementos do jogo
 type Elemento struct {
-	simbolo  rune
-	cor      termbox.Attribute
-	corFundo termbox.Attribute
-	tangivel bool
+	Simbolo  rune
+	Cor      termbox.Attribute
+	CorFundo termbox.Attribute
+	Tangivel bool
 }
 
 type Posicao struct {
@@ -54,52 +54,46 @@ type Posicao struct {
 	Y int
 }
 
-// Personagem controlado pelo jogador
 var personagem = Elemento{
-	simbolo:  '☺',
-	cor:      termbox.ColorBlack,
-	corFundo: termbox.ColorDefault,
-	tangivel: true,
+	Simbolo:  '☺',
+	Cor:      termbox.ColorBlack,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: true,
 }
 
-// Parede
 var parede = Elemento{
-	simbolo:  '▤',
-	cor:      termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim,
-	corFundo: termbox.ColorDarkGray,
-	tangivel: true,
+	Simbolo:  '▤',
+	Cor:      termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim,
+	CorFundo: termbox.ColorDarkGray,
+	Tangivel: true,
 }
 
-// Barrreira
 var barreira = Elemento{
-	simbolo:  '#',
-	cor:      termbox.ColorRed,
-	corFundo: termbox.ColorDefault,
-	tangivel: true,
+	Simbolo:  '#',
+	Cor:      termbox.ColorRed,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: true,
 }
 
-// Vegetação
 var vegetacao = Elemento{
-	simbolo:  '♣',
-	cor:      termbox.ColorGreen,
-	corFundo: termbox.ColorDefault,
-	tangivel: false,
+	Simbolo:  '♣',
+	Cor:      termbox.ColorGreen,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: false,
 }
 
-// Elemento vazio
 var vazio = Elemento{
-	simbolo:  ' ',
-	cor:      termbox.ColorDefault,
-	corFundo: termbox.ColorDefault,
-	tangivel: false,
+	Simbolo:  ' ',
+	Cor:      termbox.ColorDefault,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: false,
 }
 
-// Elemento para representar áreas não reveladas (efeito de neblina)
 var neblina = Elemento{
-	simbolo:  '.',
-	cor:      termbox.ColorDefault,
-	corFundo: termbox.ColorYellow,
-	tangivel: false,
+	Simbolo:  '.',
+	Cor:      termbox.ColorDefault,
+	CorFundo: termbox.ColorYellow,
+	Tangivel: false,
 }
 
 func (s *Servidor) Inicializar() {
@@ -113,7 +107,7 @@ func (s *Servidor) Inicializar() {
 }
 
 // metodo remoto que registra cliente
-func (s *Servidor) RegisterClient(nome string, reply *int) error{
+func (s *Servidor) RegisterClient(nome string, reply *int) error {
 	if s.State.Jogador1.Nome == "" {
 		s.State.Jogador1.Nome = nome
 		*reply = 1
@@ -127,7 +121,7 @@ func (s *Servidor) RegisterClient(nome string, reply *int) error{
 }
 
 // metodo remoto que recebe comando do cliente
-func (s *Servidor) SendCommand(cmd Command, reply *string) error{
+func (s *Servidor) SendCommand(cmd Command, reply *string) error {
 	var player *Player
 	if cmd.PlayerID == 1 {
 		player = &s.State.Jogador1
@@ -198,13 +192,13 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 		for x, char := range linhaTexto {
 			elementoAtual := vazio
 			switch char {
-			case parede.simbolo:
+			case parede.Simbolo:
 				elementoAtual = parede
-			case barreira.simbolo:
+			case barreira.Simbolo:
 				elementoAtual = barreira
-			case vegetacao.simbolo:
+			case vegetacao.Simbolo:
 				elementoAtual = vegetacao
-			case personagem.simbolo:
+			case personagem.Simbolo:
 				// Atualiza a posição inicial do personagem
 				// s.state.posX, s.state.posY = x, y
 				fmt.Printf("Personagem encontrado na posição (%d, %d)\n", x, y)
@@ -228,9 +222,9 @@ func (s *Servidor) DesenhaTudo() {
 	for y, linha := range s.State.Mapa {
 		for x, elem := range linha {
 			if s.State.EfeitoNeblina == false || s.State.Revelado[y][x] {
-				termbox.SetCell(x, y, elem.simbolo, elem.cor, elem.corFundo)
+				termbox.SetCell(x, y, elem.Simbolo, elem.Cor, elem.CorFundo)
 			} else {
-				termbox.SetCell(x, y, neblina.simbolo, neblina.cor, neblina.corFundo)
+				termbox.SetCell(x, y, neblina.Simbolo, neblina.Cor, neblina.CorFundo)
 			}
 		}
 	}
@@ -305,9 +299,9 @@ func (s *Servidor) Mover(username string, comando rune) error {
 		dx = 1
 	}
 
-	novaPosX, novaPosY := player.Posicao.X + dx, player.Posicao.Y + dy
+	novaPosX, novaPosY := player.Posicao.X+dx, player.Posicao.Y+dy
 	if novaPosY >= 0 && novaPosY < len(s.State.Mapa) && novaPosX >= 0 && novaPosX < len(s.State.Mapa[novaPosY]) &&
-		s.State.Mapa[novaPosY][novaPosX].tangivel == false {
+		s.State.Mapa[novaPosY][novaPosX].Tangivel == false {
 		player.Posicao = Posicao{novaPosX, novaPosY}
 		return nil
 	}
