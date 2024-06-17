@@ -21,6 +21,7 @@ type GameState struct {
 	EfeitoNeblina               bool
 	Revelado                    [][]bool
 	RaioVisao                   int
+	NroJogadores				int
 }
 
 // estrutura para o jogador
@@ -104,18 +105,39 @@ func (s *Servidor) Inicializar() {
 	s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = false
 	s.State.RaioVisao = 3
+	s.State.NroJogadores = 0
 }
 
 // metodo remoto que registra cliente
-func (s *Servidor) RegisterClient(nome string, reply *int) error {
-	if s.State.Jogador1.Nome == "" {
-		s.State.Jogador1.Nome = nome
-		*reply = 1
-	} else if s.State.Jogador2.Nome == "" {
-		s.State.Jogador2.Nome = nome
-		*reply = 2
-	} else {
+func (s *Servidor) RegisterClient(nome string, reply *int) error{
+	if s.State.NroJogadores < 2 {
+		if s.State.NroJogadores < 1 {
+			s.State.Jogador1.Nome = nome
+			s.State.NroJogadores++
+			*reply = 1
+		} else{
+			s.State.Jogador2.Nome = nome
+			s.State.NroJogadores++
+			*reply = 2
+		}
+	} else{
 		return fmt.Errorf("Limite de jogadores atingido.")
+	}
+	return nil
+}
+
+// metodo remoto que retira cliente
+func (s *Servidor) UnregisterClient(playerID int, reply *string) error{
+	if playerID == 1 && s.State.Jogador1.Nome != ""{
+		*reply = s.State.Jogador1.Nome + " desconectado."
+		s.State.Jogador1.Nome = ""
+		s.State.NroJogadores--
+	} else if playerID == 2 && s.State.Jogador2.Nome != "" {
+		*reply = s.State.Jogador2.Nome + " desconectado."
+		s.State.Jogador2.Nome = ""
+		s.State.NroJogadores--
+	} else{
+		return fmt.Errorf("Jogador ja desconectado.")
 	}
 	return nil
 }
@@ -223,32 +245,6 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 	}
 	return nil
 }
-
-// func (s *Servidor) DesenhaTudo() {
-// 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-// 	for y, linha := range s.State.Mapa {
-// 		for x, elem := range linha {
-// 			if s.State.EfeitoNeblina == false || s.State.Revelado[y][x] {
-// 				termbox.SetCell(x, y, elem.Simbolo, elem.Cor, elem.CorFundo)
-// 			} else {
-// 				termbox.SetCell(x, y, neblina.Simbolo, neblina.Cor, neblina.CorFundo)
-// 			}
-// 		}
-// 	}
-
-// 	s.DesenhaBarraDeStatus()
-// 	termbox.Flush()
-// }
-
-// func (s *Servidor) DesenhaBarraDeStatus() {
-// 	for i, c := range s.State.StatusMsg {
-// 		termbox.SetCell(i, len(s.State.Mapa)+1, c, termbox.ColorBlack, termbox.ColorDefault)
-// 	}
-// 	msg := "Use WASD para mover e E para interagir. ESC para sair."
-// 	for i, c := range msg {
-// 		termbox.SetCell(i, len(s.State.Mapa)+3, c, termbox.ColorBlack, termbox.ColorDefault)
-// 	}
-// }
 
 func (s *Servidor) RevelarArea(username string) {
 	var posicao Posicao

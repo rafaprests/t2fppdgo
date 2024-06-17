@@ -19,6 +19,7 @@ type GameState struct {
 	EfeitoNeblina               bool
 	Revelado                    [][]bool
 	RaioVisao                   int
+	NroJogadores				int
 }
 
 // estrutura para o jogador
@@ -102,6 +103,13 @@ func main() {
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
 			if ev.Key == termbox.KeyEsc {
+				var response string
+				err := client.Call("Servidor.UnregisterClient", reply, &response)
+				if err != nil {
+					fmt.Println("Erro ao desconectar cliente:", err)
+				} else {
+					fmt.Println(response)
+				}
 				return
 			}
 			if ev.Key == termbox.KeyArrowUp{
@@ -139,7 +147,7 @@ func desenharEstadoDoJogo(game *GameState) {
 			}
 		}
 	}
-	
+
 	// Desenhar os personagens
 	termbox.SetCell(game.Jogador1.Posicao.X, game.Jogador1.Posicao.Y, '☺', termbox.ColorWhite, termbox.ColorDefault)
 	termbox.SetCell(game.Jogador2.Posicao.X, game.Jogador2.Posicao.Y, '☺', termbox.ColorWhite, termbox.ColorDefault)
