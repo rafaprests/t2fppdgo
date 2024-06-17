@@ -19,9 +19,10 @@ type GameState struct {
 	UltimoElementoSobPersonagem Elemento
 	StatusMsg                   string
 	EfeitoNeblina               bool
-	Revelado                    [][]bool
+	ReveladoJ1                  [][]bool // Matriz de visibilidade do Jogador 1
+	ReveladoJ2                  [][]bool // Matriz de visibilidade do Jogador 2
 	RaioVisao                   int
-	NroJogadores				int
+	NroJogadores                int
 }
 
 // estrutura para o jogador
@@ -101,25 +102,30 @@ func (s *Servidor) Inicializar() {
 	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
 	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
 	s.CarregarMapa("mapa.txt")
-	s.State.UltimoElementoSobPersonagem = vazio
 	s.State.StatusMsg = "jogo inicializado"
-	s.State.EfeitoNeblina = false
+	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 	s.State.NroJogadores = 0
+
+	// Inicializar matrizes de visibilidade
+	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))
+	s.State.ReveladoJ2 = make([][]bool, len(s.State.Mapa))
+	for i := range s.State.Mapa {
+		s.State.ReveladoJ1[i] = make([]bool, len(s.State.Mapa[i]))
+		s.State.ReveladoJ2[i] = make([]bool, len(s.State.Mapa[i]))
+	}
 }
 
 // metodo remoto que registra cliente
 func (s *Servidor) RegisterClient(nome string, reply *int) error{
-	if s.State.NroJogadores < 2 {
-		if s.State.NroJogadores < 1 {
-			s.State.Jogador1.Nome = nome
-			s.State.NroJogadores++
-			*reply = 1
-		} else{
-			s.State.Jogador2.Nome = nome
-			s.State.NroJogadores++
-			*reply = 2
-		}
+	if s.State.Jogador1.Nome == ""{
+		s.State.Jogador1.Nome = nome
+		s.State.NroJogadores++
+		*reply = 1
+	} else if s.State.Jogador2.Nome == "" {
+		s.State.Jogador2.Nome = nome
+		s.State.NroJogadores++
+		*reply = 2
 	} else{
 		return fmt.Errorf("Limite de jogadores atingido.")
 	}
@@ -237,47 +243,13 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 			linhaRevelada = append(linhaRevelada, false)
 		}
 		s.State.Mapa = append(s.State.Mapa, linhaElementos)
-		s.State.Revelado = append(s.State.Revelado, linhaRevelada)
+		//s.State.Revelado = append(s.State.Revelado, linhaRevelada)
 		y++
 	}
 	if err := scanner.Err(); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *Servidor) RevelarArea(username string) {
-	var posicao Posicao
-	if s.State.Jogador1.Nome == username {
-		posicao = s.State.Jogador1.Posicao
-	} else if s.State.Jogador2.Nome == username {
-		posicao = s.State.Jogador2.Posicao
-	}
-
-	minX := max(0, posicao.X-s.State.RaioVisao)
-	maxX := min(len(s.State.Mapa[0])-1, posicao.X+s.State.RaioVisao)
-	minY := max(0, posicao.Y-s.State.RaioVisao/2)
-	maxY := min(len(s.State.Mapa)-1, posicao.Y+s.State.RaioVisao/2)
-
-	for y := minY; y <= maxY; y++ {
-		for x := minX; x <= maxX; x++ {
-			s.State.Revelado[y][x] = true
-		}
-	}
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 func (s *Servidor) Mover(username string, comando rune) error {
@@ -306,10 +278,42 @@ func (s *Servidor) Mover(username string, comando rune) error {
 	if novaPosY >= 0 && novaPosY < len(s.State.Mapa) && novaPosX >= 0 && novaPosX < len(s.State.Mapa[novaPosY]) &&
 		s.State.Mapa[novaPosY][novaPosX].Tangivel == false {
 		player.Posicao = Posicao{novaPosX, novaPosY}
+		s.RevelarArea(player.Posicao.X, player.Posicao.Y, player.Id)
 		return nil
 	}
 
 	return nil //fmt.Errorf("Movimento inválido para o jogador %s", username)
+}
+
+func (s *Servidor) RevelarArea(x, y, playerID int) {
+	minX := max(0, x-s.State.RaioVisao)
+	maxX := min(len(s.State.Mapa[0])-1, x+s.State.RaioVisao)
+	minY := max(0, y-s.State.RaioVisao)
+	maxY := min(len(s.State.Mapa)-1, y+s.State.RaioVisao)
+
+	for i := minY; i <= maxY; i++ {
+		for j := minX; j <= maxX; j++ {
+			if playerID == 1 {
+				s.State.ReveladoJ1[i][j] = true
+			} else if playerID == 2 {
+				s.State.ReveladoJ2[i][j] = true
+			}
+		}
+	}
+}
+
+func max(a, b int) int {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func min(a, b int) int {
+    if a < b {
+        return a
+    }
+    return b
 }
 
 func (s *Servidor) Interagir(username string) error {

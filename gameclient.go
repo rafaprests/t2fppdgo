@@ -17,9 +17,10 @@ type GameState struct {
 	UltimoElementoSobPersonagem Elemento
 	StatusMsg                   string
 	EfeitoNeblina               bool
-	Revelado                    [][]bool
+	ReveladoJ1                  [][]bool // Matriz de visibilidade do Jogador 1
+	ReveladoJ2                  [][]bool // Matriz de visibilidade do Jogador 2
 	RaioVisao                   int
-	NroJogadores				int
+	NroJogadores                int
 }
 
 // estrutura para o jogador
@@ -46,6 +47,48 @@ type Elemento struct {
 type Posicao struct {
 	X int
 	Y int
+}
+
+var personagem = Elemento{
+	Simbolo:  '☺',
+	Cor:      termbox.ColorWhite,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: true,
+}
+
+var parede = Elemento{
+	Simbolo:  '▤',
+	Cor:      termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim,
+	CorFundo: termbox.ColorDarkGray,
+	Tangivel: true,
+}
+
+var barreira = Elemento{
+	Simbolo:  '#',
+	Cor:      termbox.ColorRed,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: true,
+}
+
+var vegetacao = Elemento{
+	Simbolo:  '♣',
+	Cor:      termbox.ColorGreen,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: false,
+}
+
+var vazio = Elemento{
+	Simbolo:  ' ',
+	Cor:      termbox.ColorDefault,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: false,
+}
+
+var neblina = Elemento{
+	Simbolo:  '.',
+	Cor:      termbox.ColorDefault,
+	CorFundo: termbox.ColorYellow,
+	Tangivel: false,
 }
 
 // estrutura para comando
@@ -93,7 +136,7 @@ func main() {
 			}
 
 			// Desenhar o estado do jogo na tela
-			desenharEstadoDoJogo(&game)
+			desenharEstadoDoJogo(&game, reply)
 			time.Sleep(200 * time.Millisecond)
 		}
 	}()
@@ -136,14 +179,21 @@ func main() {
 	}
 }
 
-func desenharEstadoDoJogo(game *GameState) {
+func desenharEstadoDoJogo(game *GameState, playerID int) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	for y, linha := range game.Mapa {
 		for x, elem := range linha {
-			if game.EfeitoNeblina == false || game.Revelado[y][x] {
+			var revelado bool
+			if playerID == 1 {
+				revelado = game.ReveladoJ1[y][x]
+			} else if playerID == 2 {
+				revelado = game.ReveladoJ2[y][x]
+			}
+
+			if game.EfeitoNeblina == false || revelado {
 				termbox.SetCell(x, y, elem.Simbolo, elem.Cor, elem.CorFundo)
 			} else {
-				termbox.SetCell(x, y, '.', termbox.ColorDefault, termbox.ColorYellow)
+				termbox.SetCell(x, y, neblina.Simbolo, neblina.Cor, neblina.CorFundo)
 			}
 		}
 	}
