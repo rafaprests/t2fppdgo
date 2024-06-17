@@ -16,11 +16,10 @@ type GameState struct {
 	Mapa                        [][]Elemento
 	Jogador1                    Player
 	Jogador2                    Player
-	UltimoElementoSobPersonagem Elemento
-	StatusMsg                   string
+	//StatusMsg                   string
 	EfeitoNeblina               bool
-	ReveladoJ1                  [][]bool // Matriz de visibilidade do Jogador 1
-	ReveladoJ2                  [][]bool // Matriz de visibilidade do Jogador 2
+	ReveladoJ1                  [][]bool 
+	ReveladoJ2                  [][]bool 
 	RaioVisao                   int
 	NroJogadores                int
 }
@@ -59,6 +58,13 @@ type Posicao struct {
 var personagem = Elemento{
 	Simbolo:  '☺',
 	Cor:      termbox.ColorWhite,
+	CorFundo: termbox.ColorDefault,
+	Tangivel: true,
+}
+
+var pombo = Elemento{
+	Simbolo: 'P',
+	Cor: termbox.ColorLightBlue,
 	CorFundo: termbox.ColorDefault,
 	Tangivel: true,
 }
@@ -102,7 +108,7 @@ func (s *Servidor) Inicializar() {
 	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
 	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
 	s.CarregarMapa("mapa.txt")
-	s.State.StatusMsg = "jogo inicializado"
+	//s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 	s.State.NroJogadores = 0
@@ -150,26 +156,17 @@ func (s *Servidor) UnregisterClient(playerID int, reply *string) error{
 
 // metodo remoto que recebe comando do cliente
 func (s *Servidor) SendCommand(cmd Command, reply *string) error {
-	var player *Player
-	if cmd.PlayerID == 1 {
-		player = &s.State.Jogador1
-	} else if cmd.PlayerID == 2 {
-		player = &s.State.Jogador2
-	} else {
-		return fmt.Errorf("ID de jogador invalido")
-	}
-
 	switch cmd.Action {
 	case "move_up":
-		return s.Mover(player.Nome, 'w')
+		return s.Mover(cmd.PlayerID, 'w')
 	case "move_down":
-		return s.Mover(player.Nome, 's')
+		return s.Mover(cmd.PlayerID, 's')
 	case "move_left":
-		return s.Mover(player.Nome, 'a')
+		return s.Mover(cmd.PlayerID, 'a')
 	case "move_right":
-		return s.Mover(player.Nome, 'd')
+		return s.Mover(cmd.PlayerID, 'd')
 	case "interact":
-		return s.Interagir(player.Nome)
+		return s.Interagir(cmd.PlayerID)
 	default:
 		return fmt.Errorf("acao invalida")
 	}
@@ -226,6 +223,8 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 				elementoAtual = barreira
 			case vegetacao.Simbolo:
 				elementoAtual = vegetacao
+			case pombo.Simbolo:
+				elementoAtual = pombo
 			case personagem.Simbolo:
 				// Atualiza a posição inicial do personagem
 				if s.State.Jogador1.Posicao.X == 0 && s.State.Jogador1.Posicao.Y == 0 {
@@ -252,14 +251,14 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 	return nil
 }
 
-func (s *Servidor) Mover(username string, comando rune) error {
+func (s *Servidor) Mover(playerID int, comando rune) error {
 	var player *Player
-	if s.State.Jogador1.Nome == username {
+	if playerID == 1 {
 		player = &s.State.Jogador1
-	} else if s.State.Jogador2.Nome == username {
+	} else if playerID == 2 {
 		player = &s.State.Jogador2
 	} else {
-		return fmt.Errorf("Jogador não encontrado: %s", username)
+		return fmt.Errorf("Jogador não encontrado.")
 	}
 
 	dx, dy := 0, 0
@@ -282,7 +281,7 @@ func (s *Servidor) Mover(username string, comando rune) error {
 		return nil
 	}
 
-	return nil //fmt.Errorf("Movimento inválido para o jogador %s", username)
+	return nil 
 }
 
 func (s *Servidor) RevelarArea(x, y, playerID int) {
@@ -316,16 +315,34 @@ func min(a, b int) int {
     return b
 }
 
-func (s *Servidor) Interagir(username string) error {
+func (s *Servidor) Interagir(playerID int) error {
 	var posicao Posicao
-	if s.State.Jogador1.Nome == username {
+	if playerID == 1 {
 		posicao = s.State.Jogador1.Posicao
-	} else if s.State.Jogador2.Nome == username {
+	} else if playerID == 2 {
 		posicao = s.State.Jogador2.Posicao
 	} else {
-		return fmt.Errorf("Jogador não encontrado: %s", username)
+		return fmt.Errorf("Jogador não encontrado.")
 	}
 
-	s.State.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d) pelo jogador %s", posicao.X, posicao.Y, username)
+	direcoes := []Posicao{
+		{0, -1},  // cima
+		{0, 1},   // baixo
+		{-1, 0},  // esquerda
+		{1, 0},   // direita
+	}
+
+	for _, direcao := range direcoes {
+		novoX := posicao.X + direcao.X
+		novoY := posicao.Y + direcao.Y
+		if novoX >= 0 && novoX < len(s.State.Mapa[0]) && novoY >= 0 && novoY < len(s.State.Mapa) {
+			if s.State.Mapa[novoY][novoX].Simbolo == pombo.Simbolo {
+				//*s.State.StatusMsg = 
+				fmt.Sprintf("Jogador %d ganhou ao interagir com o pombo!", playerID)
+				return nil
+			}
+		}
+	}
+
 	return nil
 }
