@@ -171,6 +171,9 @@ func (s *Servidor) SendCommand(cmd Command, reply *string) error {
 		return s.Mover(cmd.PlayerID, 'd')
 	case "interact":
 		return s.Interagir(cmd.PlayerID)
+	case "restart":
+		s.Restartar()
+		return nil
 	default:
 		return fmt.Errorf("acao invalida")
 	}
@@ -190,6 +193,23 @@ func (s *Servidor) Inicializar() {
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 	s.State.NroJogadores = 0
+
+	// Inicializar matrizes de visibilidade
+	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))
+	s.State.ReveladoJ2 = make([][]bool, len(s.State.Mapa))
+	for i := range s.State.Mapa {
+		s.State.ReveladoJ1[i] = make([]bool, len(s.State.Mapa[i]))
+		s.State.ReveladoJ2[i] = make([]bool, len(s.State.Mapa[i]))
+	}
+}
+
+func (s *Servidor) Restartar() {
+	s.State.Jogador1.Posicao = Posicao{0, 0}
+	s.State.Jogador2.Posicao = Posicao{0, 0}
+	s.CarregarMapa("mapa.txt")
+	//s.State.StatusMsg = "jogo inicializado"
+	s.State.EfeitoNeblina = true
+	s.State.RaioVisao = 3
 
 	// Inicializar matrizes de visibilidade
 	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))
@@ -230,7 +250,7 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 					s.State.Jogador1.Posicao.X = x
 					s.State.Jogador1.Posicao.Y = y
 					fmt.Printf("Jogador1 encontrado na posição (%d, %d)\n", x, y)
-				} else {
+				} else if s.State.Jogador2.Posicao.X == 0 && s.State.Jogador2.Posicao.Y == 0 {
 					s.State.Jogador2.Posicao.X = x
 					s.State.Jogador2.Posicao.Y = y
 					fmt.Printf("Jogador2 encontrado na posição (%d, %d)\n", x, y)

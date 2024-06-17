@@ -169,6 +169,9 @@ func main() {
 			if ev.Ch == 'e'{
 				action = "interact"
 			}
+			if ev.Ch == 'r'{
+				action = "restart"
+			}
 		}
 		if action != "" {
 			cmd := Command{PlayerID: reply, Action: action}
