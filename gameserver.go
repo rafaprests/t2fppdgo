@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	//"math/rand"
+	"math/rand"
 	"net"
 	"net/rpc"
 	"os"
+	"time"
 	"github.com/nsf/termbox-go"
 )
 
@@ -188,7 +189,7 @@ func (s *Servidor) GetGameState(player string, game *GameState) error {
 func (s *Servidor) Inicializar() {
 	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
 	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
-	//s.RandomizarMapa("mapa.txt")
+	s.RandomizarMapa("mapa.txt")
 	s.CarregarMapa("mapa.txt")
 	//s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = true
@@ -207,7 +208,8 @@ func (s *Servidor) Inicializar() {
 func (s *Servidor) Restartar() {
 	s.State.Jogador1.Posicao = Posicao{0, 0}
 	s.State.Jogador2.Posicao = Posicao{0, 0}
-	//s.RandomizarMapa("mapa.txt")
+	
+	s.RandomizarMapa("mapa.txt")
 	s.CarregarMapa("mapa.txt")
 	//s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = true
@@ -222,71 +224,59 @@ func (s *Servidor) Restartar() {
 	}
 }
 
-// método para carregar e randomizar o mapa
-// func (s *Servidor) RandomizarMapa(nomeArquivo string) error {
-// 	arquivo, err := os.Open(nomeArquivo)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer arquivo.Close()
+func (s *Servidor) RandomizarMapa(nomeArquivo string) error {
+	rand.Seed(time.Now().UnixNano())
+	arquivo, err := os.Open(nomeArquivo)
+	if err != nil {
+		return err
+	}
+	defer arquivo.Close()
 
-// 	var linhas [][]rune
-// 	scanner := bufio.NewScanner(arquivo)
-// 	for scanner.Scan() {
-// 		linhaTexto := scanner.Text()
-// 		linha := []rune(linhaTexto)
-// 		linhas = append(linhas, linha)
-// 	}
+	var mapa [][]Elemento
 
-// 	if err := scanner.Err(); err != nil {
-// 		return err
-// 	}
+	scanner := bufio.NewScanner(arquivo)
+	for scanner.Scan() {
+		linhaTexto := scanner.Text()
+		var linhaElementos []Elemento
+		for _, char := range linhaTexto {
+			elementoAtual := vazio
+			switch char {
+			case parede.Simbolo:
+				elementoAtual = parede
+			case barreira.Simbolo:
+				elementoAtual = barreira
+			case vegetacao.Simbolo:
+				elementoAtual = vegetacao
+			}
+			linhaElementos = append(linhaElementos, elementoAtual)
+		}
+		mapa = append(mapa, linhaElementos)
+	}
 
-// 	// Remover jogadores e pombo do mapa atual
-// 	for y := range linhas {
-// 		for x := range linhas[y] {
-// 			if linhas[y][x] == personagem.Simbolo || linhas[y][x] == pombo.Simbolo {
-// 				linhas[y][x] = vazio.Simbolo
-// 			}
-// 		}
-// 	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
 
-// 	// Função auxiliar para encontrar uma posição aleatória válida
-// 	posicaoAleatoria := func() (int, int) {
-// 		for {
-// 			x := rand.Intn(len(linhas[0]))
-// 			y := rand.Intn(len(linhas))
-// 			if linhas[y][x] == vazio.Simbolo {
-// 				return x, y
-// 			}
-// 		}
-// 	}
+	s.State.Mapa = mapa
+	s.State.Jogador1.Posicao = s.encontrarPosicaoAleatoria()
+	s.State.Jogador2.Posicao = s.encontrarPosicaoAleatoria()
+	pomboPos := s.encontrarPosicaoAleatoria()
+	s.State.Mapa[pomboPos.Y][pomboPos.X] = pombo
 
-// 	// Colocar jogadores em posições aleatórias
-// 	jogador1X, jogador1Y := posicaoAleatoria()
-// 	linhas[jogador1Y][jogador1X] = personagem.Simbolo
+	return nil
+}
 
-// 	jogador2X, jogador2Y := posicaoAleatoria()
-// 	linhas[jogador2Y][jogador2X] = personagem.Simbolo
-
-// 	// Colocar pombo em uma posição aleatória
-// 	pomboX, pomboY := posicaoAleatoria()
-// 	linhas[pomboY][pomboX] = pombo.Simbolo
-
-// 	// Salvar o mapa atualizado no arquivo
-// 	arquivo, err = os.Create(nomeArquivo)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer arquivo.Close()
-
-// 	writer := bufio.NewWriter(arquivo)
-// 	for _, linha := range linhas {
-// 		writer.WriteString(string(linha) + "\n")
-// 	}
-
-// 	return writer.Flush()
-// }
+func (s *Servidor) encontrarPosicaoAleatoria() Posicao {
+	var pos Posicao
+	for {
+		pos.X = rand.Intn(len(s.State.Mapa[0]))
+		pos.Y = rand.Intn(len(s.State.Mapa))
+		if s.State.Mapa[pos.Y][pos.X].Tangivel == false {
+			break
+		}
+	}
+	return pos
+}
 
 func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 	arquivo, err := os.Open(nomeArquivo)
@@ -317,11 +307,9 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 				if s.State.Jogador1.Posicao.X == 0 && s.State.Jogador1.Posicao.Y == 0 {
 					s.State.Jogador1.Posicao.X = x
 					s.State.Jogador1.Posicao.Y = y
-					fmt.Printf("Jogador1 encontrado na posição (%d, %d)\n", x, y)
 				} else if s.State.Jogador2.Posicao.X == 0 && s.State.Jogador2.Posicao.Y == 0 {
 					s.State.Jogador2.Posicao.X = x
 					s.State.Jogador2.Posicao.Y = y
-					fmt.Printf("Jogador2 encontrado na posição (%d, %d)\n", x, y)
 				}
 				elementoAtual = vazio
 			}
