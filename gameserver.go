@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/nsf/termbox-go"
-	//"golang.org/x/text/cases"
 )
 
 // estrutura do gamestate
@@ -104,21 +103,26 @@ var neblina = Elemento{
 	Tangivel: false,
 }
 
-func (s *Servidor) Inicializar() {
-	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
-	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
-	s.CarregarMapa("mapa.txt")
-	//s.State.StatusMsg = "jogo inicializado"
-	s.State.EfeitoNeblina = true
-	s.State.RaioVisao = 3
-	s.State.NroJogadores = 0
+func main() {
+	porta := 8973
+	servidor := new(Servidor)
+	servidor.Inicializar()
 
-	// Inicializar matrizes de visibilidade
-	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))
-	s.State.ReveladoJ2 = make([][]bool, len(s.State.Mapa))
-	for i := range s.State.Mapa {
-		s.State.ReveladoJ1[i] = make([]bool, len(s.State.Mapa[i]))
-		s.State.ReveladoJ2[i] = make([]bool, len(s.State.Mapa[i]))
+	rpc.Register(servidor)
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", porta))
+	if err != nil {
+		fmt.Println("Erro ao iniciar o servidor:", err)
+		return
+	}
+
+	fmt.Println("Servidor aguardando conexões na porta", porta)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Erro ao aceitar conexão:", err)
+			continue
+		}
+		go rpc.ServeConn(conn)
 	}
 }
 
@@ -178,26 +182,21 @@ func (s *Servidor) GetGameState(player string, game *GameState) error {
 	return nil
 }
 
-func main() {
-	porta := 8973
-	servidor := new(Servidor)
-	servidor.Inicializar()
+func (s *Servidor) Inicializar() {
+	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
+	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
+	s.CarregarMapa("mapa.txt")
+	//s.State.StatusMsg = "jogo inicializado"
+	s.State.EfeitoNeblina = true
+	s.State.RaioVisao = 3
+	s.State.NroJogadores = 0
 
-	rpc.Register(servidor)
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", porta))
-	if err != nil {
-		fmt.Println("Erro ao iniciar o servidor:", err)
-		return
-	}
-
-	fmt.Println("Servidor aguardando conexões na porta", porta)
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			fmt.Println("Erro ao aceitar conexão:", err)
-			continue
-		}
-		go rpc.ServeConn(conn)
+	// Inicializar matrizes de visibilidade
+	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))
+	s.State.ReveladoJ2 = make([][]bool, len(s.State.Mapa))
+	for i := range s.State.Mapa {
+		s.State.ReveladoJ1[i] = make([]bool, len(s.State.Mapa[i]))
+		s.State.ReveladoJ2[i] = make([]bool, len(s.State.Mapa[i]))
 	}
 }
 
@@ -242,7 +241,6 @@ func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 			linhaRevelada = append(linhaRevelada, false)
 		}
 		s.State.Mapa = append(s.State.Mapa, linhaElementos)
-		//s.State.Revelado = append(s.State.Revelado, linhaRevelada)
 		y++
 	}
 	if err := scanner.Err(); err != nil {
@@ -284,6 +282,44 @@ func (s *Servidor) Mover(playerID int, comando rune) error {
 	return nil 
 }
 
+func (s *Servidor) Interagir(playerID int) error {
+	var posicao *Posicao
+	if playerID == 1 {
+		posicao = &s.State.Jogador1.Posicao
+	} else if playerID == 2 {
+		posicao = &s.State.Jogador2.Posicao
+	} else {
+		return fmt.Errorf("Jogador não encontrado.")
+	}
+
+	direcoes := []Posicao{
+		{0, -1},  // cima
+		{0, 1},   // baixo
+		{-1, 0},  // esquerda
+		{1, 0},   // direita
+	}
+
+	for _, direcao := range direcoes {
+		novoX := posicao.X + direcao.X
+		novoY := posicao.Y + direcao.Y
+		if novoX >= 0 && novoX < len(s.State.Mapa[0]) && novoY >= 0 && novoY < len(s.State.Mapa) {
+			if s.State.Mapa[novoY][novoX].Simbolo == pombo.Simbolo {
+				//s.State.EfeitoNeblina = false
+				// Atualizar a visibilidade para ambos os jogadores
+				for i := range s.State.ReveladoJ1 {
+					for j := range s.State.ReveladoJ1[i] {
+						s.State.ReveladoJ1[i][j] = true
+						s.State.ReveladoJ2[i][j] = true
+					}
+				}
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *Servidor) RevelarArea(x, y, playerID int) {
 	minX := max(0, x-s.State.RaioVisao)
 	maxX := min(len(s.State.Mapa[0])-1, x+s.State.RaioVisao)
@@ -313,36 +349,4 @@ func min(a, b int) int {
         return a
     }
     return b
-}
-
-func (s *Servidor) Interagir(playerID int) error {
-	var posicao Posicao
-	if playerID == 1 {
-		posicao = s.State.Jogador1.Posicao
-	} else if playerID == 2 {
-		posicao = s.State.Jogador2.Posicao
-	} else {
-		return fmt.Errorf("Jogador não encontrado.")
-	}
-
-	direcoes := []Posicao{
-		{0, -1},  // cima
-		{0, 1},   // baixo
-		{-1, 0},  // esquerda
-		{1, 0},   // direita
-	}
-
-	for _, direcao := range direcoes {
-		novoX := posicao.X + direcao.X
-		novoY := posicao.Y + direcao.Y
-		if novoX >= 0 && novoX < len(s.State.Mapa[0]) && novoY >= 0 && novoY < len(s.State.Mapa) {
-			if s.State.Mapa[novoY][novoX].Simbolo == pombo.Simbolo {
-				//*s.State.StatusMsg = 
-				fmt.Sprintf("Jogador %d ganhou ao interagir com o pombo!", playerID)
-				return nil
-			}
-		}
-	}
-
-	return nil
 }

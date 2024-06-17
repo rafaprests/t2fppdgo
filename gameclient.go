@@ -154,19 +154,19 @@ func main() {
 				}
 				return
 			}
-			if ev.Key == termbox.KeyArrowUp{
+			if ev.Ch == 'w'{
 				action = "move_up"
 			}
-			if ev.Key == termbox.KeyArrowDown{
+			if ev.Ch == 's'{
 				action = "move_down"
 			}
-			if ev.Key == termbox.KeyArrowLeft{
+			if ev.Ch =='a'{
 				action = "move_left"
 			}
-			if ev.Key == termbox.KeyArrowRight{
+			if ev.Ch == 'd'{
 				action = "move_right"
 			}
-			if ev.Key == termbox.KeySpace{
+			if ev.Ch == 'e'{
 				action = "interact"
 			}
 		}
