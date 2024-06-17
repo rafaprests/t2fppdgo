@@ -3,10 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	//"math/rand"
 	"net"
 	"net/rpc"
 	"os"
-
 	"github.com/nsf/termbox-go"
 )
 
@@ -188,6 +188,7 @@ func (s *Servidor) GetGameState(player string, game *GameState) error {
 func (s *Servidor) Inicializar() {
 	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
 	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
+	//s.RandomizarMapa("mapa.txt")
 	s.CarregarMapa("mapa.txt")
 	//s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = true
@@ -206,6 +207,7 @@ func (s *Servidor) Inicializar() {
 func (s *Servidor) Restartar() {
 	s.State.Jogador1.Posicao = Posicao{0, 0}
 	s.State.Jogador2.Posicao = Posicao{0, 0}
+	//s.RandomizarMapa("mapa.txt")
 	s.CarregarMapa("mapa.txt")
 	//s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = true
@@ -219,6 +221,72 @@ func (s *Servidor) Restartar() {
 		s.State.ReveladoJ2[i] = make([]bool, len(s.State.Mapa[i]))
 	}
 }
+
+// método para carregar e randomizar o mapa
+// func (s *Servidor) RandomizarMapa(nomeArquivo string) error {
+// 	arquivo, err := os.Open(nomeArquivo)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer arquivo.Close()
+
+// 	var linhas [][]rune
+// 	scanner := bufio.NewScanner(arquivo)
+// 	for scanner.Scan() {
+// 		linhaTexto := scanner.Text()
+// 		linha := []rune(linhaTexto)
+// 		linhas = append(linhas, linha)
+// 	}
+
+// 	if err := scanner.Err(); err != nil {
+// 		return err
+// 	}
+
+// 	// Remover jogadores e pombo do mapa atual
+// 	for y := range linhas {
+// 		for x := range linhas[y] {
+// 			if linhas[y][x] == personagem.Simbolo || linhas[y][x] == pombo.Simbolo {
+// 				linhas[y][x] = vazio.Simbolo
+// 			}
+// 		}
+// 	}
+
+// 	// Função auxiliar para encontrar uma posição aleatória válida
+// 	posicaoAleatoria := func() (int, int) {
+// 		for {
+// 			x := rand.Intn(len(linhas[0]))
+// 			y := rand.Intn(len(linhas))
+// 			if linhas[y][x] == vazio.Simbolo {
+// 				return x, y
+// 			}
+// 		}
+// 	}
+
+// 	// Colocar jogadores em posições aleatórias
+// 	jogador1X, jogador1Y := posicaoAleatoria()
+// 	linhas[jogador1Y][jogador1X] = personagem.Simbolo
+
+// 	jogador2X, jogador2Y := posicaoAleatoria()
+// 	linhas[jogador2Y][jogador2X] = personagem.Simbolo
+
+// 	// Colocar pombo em uma posição aleatória
+// 	pomboX, pomboY := posicaoAleatoria()
+// 	linhas[pomboY][pomboX] = pombo.Simbolo
+
+// 	// Salvar o mapa atualizado no arquivo
+// 	arquivo, err = os.Create(nomeArquivo)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer arquivo.Close()
+
+// 	writer := bufio.NewWriter(arquivo)
+// 	for _, linha := range linhas {
+// 		writer.WriteString(string(linha) + "\n")
+// 	}
+
+// 	return writer.Flush()
+// }
 
 func (s *Servidor) CarregarMapa(nomeArquivo string) error {
 	arquivo, err := os.Open(nomeArquivo)
