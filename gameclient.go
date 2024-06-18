@@ -11,15 +11,15 @@ import (
 
 // estrutura do gamestate
 type GameState struct {
-	Mapa                        [][]Elemento
-	Jogador1                    Player
-	Jogador2                    Player
+	Mapa     [][]Elemento
+	Jogador1 Player
+	Jogador2 Player
 	//StatusMsg                   string
-	EfeitoNeblina               bool
-	ReveladoJ1                  [][]bool 
-	ReveladoJ2                  [][]bool 
-	RaioVisao                   int
-	NroJogadores                int
+	EfeitoNeblina bool
+	ReveladoJ1    [][]bool
+	ReveladoJ2    [][]bool
+	RaioVisao     int
+	NroJogadores  int
 }
 
 // estrutura para o jogador
@@ -154,22 +154,22 @@ func main() {
 				}
 				return
 			}
-			if ev.Ch == 'w'{
+			if ev.Ch == 'w' {
 				action = "move_up"
 			}
-			if ev.Ch == 's'{
+			if ev.Ch == 's' {
 				action = "move_down"
 			}
-			if ev.Ch =='a'{
+			if ev.Ch == 'a' {
 				action = "move_left"
 			}
-			if ev.Ch == 'd'{
+			if ev.Ch == 'd' {
 				action = "move_right"
 			}
-			if ev.Ch == 'e'{
+			if ev.Ch == 'e' {
 				action = "interact"
 			}
-			if ev.Ch == 'r'{
+			if ev.Ch == 'r' {
 				action = "restart"
 			}
 		}
@@ -177,7 +177,7 @@ func main() {
 			cmd := Command{PlayerID: reply, Action: action}
 			var response string
 			err := client.Call("Servidor.SendCommand", cmd, &response)
-			if err != nil{
+			if err != nil {
 				fmt.Println("erro ao enviar comando", err)
 			}
 		}
