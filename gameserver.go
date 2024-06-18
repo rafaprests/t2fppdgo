@@ -35,11 +35,13 @@ type Player struct {
 type Command struct {
 	PlayerID int
 	Action   string
+	SequenceNumber int
 }
 
 // Estrutura para o servidor
 type Servidor struct {
 	State GameState
+	SequenceNumberList map[int]int 
 }
 
 // estrutura para o elemento
@@ -149,10 +151,12 @@ func (s *Servidor) UnregisterClient(playerID int, reply *string) error{
 		*reply = s.State.Jogador1.Nome + " desconectado."
 		s.State.Jogador1.Nome = ""
 		s.State.NroJogadores--
+		delete(s.SequenceNumberList, playerID)
 	} else if playerID == 2 && s.State.Jogador2.Nome != "" {
 		*reply = s.State.Jogador2.Nome + " desconectado."
 		s.State.Jogador2.Nome = ""
 		s.State.NroJogadores--
+		delete(s.SequenceNumberList, playerID)
 	} else{
 		return fmt.Errorf("Jogador ja desconectado.")
 	}
@@ -161,6 +165,12 @@ func (s *Servidor) UnregisterClient(playerID int, reply *string) error{
 
 // metodo remoto que recebe comando do cliente
 func (s *Servidor) SendCommand(cmd Command, reply *string) error {
+	lastSequenceNumber, exists := s.SequenceNumberList[cmd.PlayerID]
+	if exists && cmd.SequenceNumber <= lastSequenceNumber {
+		return fmt.Errorf("comando duplicado")
+	}
+	s.SequenceNumberList[cmd.PlayerID] = cmd.SequenceNumber
+
 	switch cmd.Action {
 	case "move_up":
 		return s.Mover(cmd.PlayerID, 'w')
@@ -195,6 +205,7 @@ func (s *Servidor) Inicializar() {
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 	s.State.NroJogadores = 0
+	s.SequenceNumberList = make(map[int]int)
 
 	// Inicializar matrizes de visibilidade
 	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))

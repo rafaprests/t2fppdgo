@@ -33,6 +33,7 @@ type Player struct {
 type Command struct {
 	PlayerID int
 	Action   string
+	SequenceNumber int
 }
 
 // estrutura para o elemento
@@ -125,6 +126,8 @@ func main() {
 	defer termbox.Close()
 
 	var game GameState
+	sequenceNumber := 0
+
 	// Goroutine para atualizar o estado do jogo periodicamente
 	go func() {
 		for {
@@ -174,7 +177,8 @@ func main() {
 			}
 		}
 		if action != "" {
-			cmd := Command{PlayerID: reply, Action: action}
+			sequenceNumber++
+			cmd := Command{PlayerID: reply, Action: action, SequenceNumber: sequenceNumber}
 			var response string
 			err := client.Call("Servidor.SendCommand", cmd, &response)
 			if err != nil {
