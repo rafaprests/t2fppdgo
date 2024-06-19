@@ -203,8 +203,6 @@ func (s *Servidor) Inicializar() {
 	s.State.RaioVisao = 3
 	s.State.NroJogadores = 0
 	s.SequenceNumberList = make(map[int]int)
-
-	// Inicializar matrizes de visibilidade
 	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))
 	s.State.ReveladoJ2 = make([][]bool, len(s.State.Mapa))
 	for i := range s.State.Mapa {
@@ -216,12 +214,9 @@ func (s *Servidor) Inicializar() {
 func (s *Servidor) Restartar() {
 	s.State.Jogador1.Posicao = Posicao{0, 0}
 	s.State.Jogador2.Posicao = Posicao{0, 0}
-	
 	s.RandomizarMapa("mapa.txt")
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
-
-	// Inicializar matrizes de visibilidade
 	s.State.ReveladoJ1 = make([][]bool, len(s.State.Mapa))
 	s.State.ReveladoJ2 = make([][]bool, len(s.State.Mapa))
 	for i := range s.State.Mapa {
