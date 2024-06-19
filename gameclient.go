@@ -14,7 +14,6 @@ type GameState struct {
 	Mapa     [][]Elemento
 	Jogador1 Player
 	Jogador2 Player
-	//StatusMsg                   string
 	EfeitoNeblina bool
 	ReveladoJ1    [][]bool
 	ReveladoJ2    [][]bool
@@ -207,18 +206,8 @@ func desenharEstadoDoJogo(game *GameState, playerID int) {
 		}
 	}
 
-	// Desenhar os personagens
+	// desenhar os jogadores
 	termbox.SetCell(game.Jogador1.Posicao.X, game.Jogador1.Posicao.Y, '☺', termbox.ColorWhite, termbox.ColorDefault)
 	termbox.SetCell(game.Jogador2.Posicao.X, game.Jogador2.Posicao.Y, '☺', termbox.ColorWhite, termbox.ColorDefault)
-
-	// // Desenhar barra de status
-	// for i, c := range game.StatusMsg {
-	// 	termbox.SetCell(i, len(game.Mapa)+1, c, termbox.ColorBlack, termbox.ColorDefault)
-	// }
-	// msg := "Use WASD para mover e E para interagir. ESC para sair."
-	// for i, c := range msg {
-	// 	termbox.SetCell(i, len(game.Mapa)+3, c, termbox.ColorBlack, termbox.ColorDefault)
-	// }
-
 	termbox.Flush()
 }

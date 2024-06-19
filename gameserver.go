@@ -16,7 +16,6 @@ type GameState struct {
 	Mapa                        [][]Elemento
 	Jogador1                    Player
 	Jogador2                    Player
-	//StatusMsg                   string
 	EfeitoNeblina               bool
 	ReveladoJ1                  [][]bool 
 	ReveladoJ2                  [][]bool 
@@ -201,7 +200,6 @@ func (s *Servidor) Inicializar() {
 	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
 	s.RandomizarMapa("mapa.txt")
 	s.CarregarMapa("mapa.txt")
-	//s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 	s.State.NroJogadores = 0
@@ -222,7 +220,6 @@ func (s *Servidor) Restartar() {
 	
 	s.RandomizarMapa("mapa.txt")
 	s.CarregarMapa("mapa.txt")
-	//s.State.StatusMsg = "jogo inicializado"
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 
