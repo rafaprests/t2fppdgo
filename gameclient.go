@@ -11,9 +11,9 @@ import (
 
 // estrutura do gamestate
 type GameState struct {
-	Mapa     [][]Elemento
-	Jogador1 Player
-	Jogador2 Player
+	Mapa          [][]Elemento
+	Jogador1      Player
+	Jogador2      Player
 	EfeitoNeblina bool
 	ReveladoJ1    [][]bool
 	ReveladoJ2    [][]bool
@@ -30,8 +30,8 @@ type Player struct {
 
 // estrutura para o comando
 type Command struct {
-	PlayerID int
-	Action   string
+	PlayerID       int
+	Action         string
 	SequenceNumber int
 }
 

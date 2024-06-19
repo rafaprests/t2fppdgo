@@ -199,7 +199,6 @@ func (s *Servidor) Inicializar() {
 	s.State.Jogador1 = Player{Posicao{0, 0}, 1, ""}
 	s.State.Jogador2 = Player{Posicao{0, 0}, 2, ""}
 	s.RandomizarMapa("mapa.txt")
-	s.CarregarMapa("mapa.txt")
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 	s.State.NroJogadores = 0
@@ -219,7 +218,6 @@ func (s *Servidor) Restartar() {
 	s.State.Jogador2.Posicao = Posicao{0, 0}
 	
 	s.RandomizarMapa("mapa.txt")
-	s.CarregarMapa("mapa.txt")
 	s.State.EfeitoNeblina = true
 	s.State.RaioVisao = 3
 
@@ -284,53 +282,6 @@ func (s *Servidor) encontrarPosicaoAleatoria() Posicao {
 		}
 	}
 	return pos
-}
-
-func (s *Servidor) CarregarMapa(nomeArquivo string) error {
-	arquivo, err := os.Open(nomeArquivo)
-	if err != nil {
-		return err
-	}
-	defer arquivo.Close()
-
-	scanner := bufio.NewScanner(arquivo)
-	y := 0
-	for scanner.Scan() {
-		linhaTexto := scanner.Text()
-		var linhaElementos []Elemento
-		var linhaRevelada []bool
-		for x, char := range linhaTexto {
-			elementoAtual := vazio
-			switch char {
-			case parede.Simbolo:
-				elementoAtual = parede
-			case barreira.Simbolo:
-				elementoAtual = barreira
-			case vegetacao.Simbolo:
-				elementoAtual = vegetacao
-			case pombo.Simbolo:
-				elementoAtual = pombo
-			case personagem.Simbolo:
-				// Atualiza a posição inicial do personagem
-				if s.State.Jogador1.Posicao.X == 0 && s.State.Jogador1.Posicao.Y == 0 {
-					s.State.Jogador1.Posicao.X = x
-					s.State.Jogador1.Posicao.Y = y
-				} else if s.State.Jogador2.Posicao.X == 0 && s.State.Jogador2.Posicao.Y == 0 {
-					s.State.Jogador2.Posicao.X = x
-					s.State.Jogador2.Posicao.Y = y
-				}
-				elementoAtual = vazio
-			}
-			linhaElementos = append(linhaElementos, elementoAtual)
-			linhaRevelada = append(linhaRevelada, false)
-		}
-		s.State.Mapa = append(s.State.Mapa, linhaElementos)
-		y++
-	}
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (s *Servidor) Mover(playerID int, comando rune) error {
